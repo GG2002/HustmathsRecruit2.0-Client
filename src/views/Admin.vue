@@ -29,10 +29,18 @@
                                         variant="underlined"></v-text-field>
                                     <v-text-field class="mx-auto" style="width:95%;" label="招新群号"
                                         v-model="addDp.recruit_qq_group" variant="underlined"></v-text-field>
+                                    <div class="mx-auto" style="width:95%;">
+                                        测试阶段：
+                                        <v-chip-group v-model="addDpRctPhase" column multiple>
+                                            <v-chip v-for="phase in enableDpRctPhase" filter variant="outlined">{{
+                                                phase.phase_name }}</v-chip>
+                                        </v-chip-group>
+                                    </div>
                                 </div>
                                 <v-card-actions>
                                     <v-spacer></v-spacer>
-                                    <v-btn color="blue-darken-1" variant="text" @click="addDeparmentDialog = false">
+                                    <v-btn color="blue-darken-1" variant="text"
+                                        @click="addDeparmentDialog = false; this.addDpRctPhase = [0]">
                                         关闭
                                     </v-btn>
                                     <v-btn color="blue-darken-1" variant="text" @click="addDeparment">
@@ -135,6 +143,9 @@
                                             部长电话：{{ dpInfo.leader_phone }}
                                             <br />
                                             部长QQ：{{ dpInfo.leader_qq }}
+                                            <br />
+                                            部门招新流程：<span v-for="phase in dpInfo.recruit_phase_list">{{ phase.phase_name
+                                            }}&nbsp;</span>
                                         </v-card-text>
                                         <v-card-text>
                                             部门介绍：{{ dpInfo.department_intro }}
@@ -165,14 +176,18 @@
                                         variant="underlined"></v-text-field>
                                     <v-text-field class="mx-auto" style="width:95%;" label="招新群号"
                                         v-model="editDp.recruit_qq_group" variant="underlined"></v-text-field>
-
-                                    <v-chip-group v-model="editDpRctPhase" column multiple>
-                                        <v-chip filter variant="outlined">asdf</v-chip>
-                                    </v-chip-group>
+                                    <div class="mx-auto" style="width:95%;">
+                                        测试阶段：<span class="text-caption">（能不改就不改，招新开始后千万不要改）</span>
+                                        <v-chip-group v-model="editDpRctPhase" column multiple>
+                                            <v-chip v-for="phase in enableDpRctPhase" filter variant="outlined">{{
+                                                phase.phase_name }}</v-chip>
+                                        </v-chip-group>
+                                    </div>
                                 </div>
                                 <v-card-actions>
                                     <v-spacer></v-spacer>
-                                    <v-btn color="blue-darken-1" variant="text" @click="editDeparmentDialog = false">
+                                    <v-btn color="blue-darken-1" variant="text"
+                                        @click="editDeparmentDialog = false; this.editDpRctPhase = []">
                                         关闭
                                     </v-btn>
                                     <v-btn color="blue-darken-1" variant="text" @click="editDeparmentInfo">
@@ -377,6 +392,7 @@ export default {
         addDeparmentDialog: false,
         addDp: {},
         editDeparmentDialog: false,
+        addDpRctPhase: [0],
         editDp: {},
         editDpRctPhase: [],
         enableDpRctPhase: [
@@ -473,11 +489,13 @@ export default {
                 url: "http://localhost:8081/dep/getdepartmentsinfo",
                 method: "get",
             }).then(response => {
-                console.log(response.data)
+                // console.log(response.data)
                 let tmpDpInfos = response.data.departments
                 for (let i = 0; i < tmpDpInfos.length; i++) {
                     tmpDpInfos[i].recruit_phase_list.sort((x, y) => x.state - y.state);
                 }
+                // 按部门名称排序，否则改动信息会打乱展示顺序
+                tmpDpInfos.sort((x, y) => x.department_name.localeCompare(y.department_name))
                 this.departmentInfos = tmpDpInfos
                 if (this.departmentInfos.length > 1 && !this.isMobile()) {
                     this.carouselArrowShow = true
@@ -488,47 +506,68 @@ export default {
             })
         },
         addDeparment() {
-            if (this.addDp.department_name == "") return;
+            if (!this.addDp.department_name) return;
+            console.log(this.addDp)
+            this.addDp.recruit_phase_list = []
+            for (let tmpPhase_i of this.addDpRctPhase) {
+                this.addDp.recruit_phase_list.push(this.enableDpRctPhase[tmpPhase_i])
+            }
             axios({
                 url: "http://localhost:8081/dep/adddepartment",
                 method: "post",
-                data: {
-                    department_name: this.addDp.department_name,
-                    department_intro: this.addDp.department_intro,
-                    leader_name: this.addDp.leader_name,
-                    leader_qq: this.addDp.leader_qq,
-                    leader_phone: this.addDp.leader_phone,
-                    recruit_qq_group: this.addDp.recruit_qq_group,
-                }
+                data: this.addDp
             }).then(response => {
                 console.log(response)
                 this.addDeparmentDialog = false
+                this.addDp = {}
+                this.addDpRctPhase = [0]
                 this.getDepartmentInfos()
             }).catch(error => {
                 console.log(error)
             })
         },
         dialogEditDeparmentInfo(dpInfo) {
-            console.log(dpInfo, this.curDepartmentIndex)
+            for (let tmpPhase of dpInfo.recruit_phase_list) {
+                for (let i = 0; i < this.enableDpRctPhase.length; i++) {
+                    if (tmpPhase.phase_name == this.enableDpRctPhase[i].phase_name) {
+                        this.editDpRctPhase.push(i)
+                    }
+                }
+            }
+            console.log(this.editDpRctPhase)
             this.editDeparmentDialog = true
             this.editDp = dpInfo
         },
+        // 检查招新流程是否改变，xx与yy不是同一类型值，不要乱用，只是写着好看
+        checkPhaseChanged(xx, yy) {
+            if (xx.length != yy.length) return true
+            for (let i of xx) {
+                let zz = false;
+                for (let yyy of yy) {
+                    if (this.enableDpRctPhase[i].phase_name == yyy.phase_name) { zz = true; }
+                }
+                // zz为false，则xx内的值与yy内的值不相同
+                if (!zz) return true;
+            }
+            return false;
+        },
         editDeparmentInfo() {
-            if (this.editDp.department_name == "") return;
+            if (!this.editDp.department_name) return;
+            let phaseChanged = this.checkPhaseChanged(this.editDpRctPhase, this.editDp.recruit_phase_list);
+            if (phaseChanged) {
+                this.editDp.recruit_phase_list = []
+                for (let tmpPhase_i of this.editDpRctPhase) {
+                    this.editDp.recruit_phase_list.push(this.enableDpRctPhase[tmpPhase_i])
+                }
+            }
+            this.editDp.phase_changed = phaseChanged
             axios({
                 url: "http://localhost:8081/dep/editdepartment",
                 method: "post",
-                data: {
-                    department_id: this.editDp.department_id,
-                    department_name: this.editDp.department_name,
-                    department_intro: this.editDp.department_intro,
-                    leader_name: this.editDp.leader_name,
-                    leader_qq: this.editDp.leader_qq,
-                    leader_phone: this.editDp.leader_phone,
-                    recruit_qq_group: this.editDp.recruit_qq_group,
-                }
+                data: this.editDp
             }).then(response => {
-                console.log(response)
+                // console.log(response)
+                this.editDpRctPhase = []
                 this.editDeparmentDialog = false
                 this.getDepartmentInfos()
             }).catch(error => {
@@ -812,7 +851,7 @@ export default {
                 }
             })
             this.recruitPlaceInfos = tmpPlaceInfos
-            console.log(this.recruitPlaceInfos)
+            // console.log(this.recruitPlaceInfos)
         },
         editPlaceInfo(e) {
             this.curRctPlaceId = e.currentTarget.dataset.place_id
