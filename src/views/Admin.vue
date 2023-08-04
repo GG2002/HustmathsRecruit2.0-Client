@@ -11,6 +11,36 @@
                     <v-spacer></v-spacer>
 
                     <template v-slot:append>
+                        <v-dialog v-model="addDeparmentDialog" persistent width="420">
+                            <template v-slot:activator="{ props }">
+                                <v-btn v-bind="props" v-if="navTabValue == 'dpIntro'" variant="outlined">添加部门</v-btn>
+                            </template>
+                            <v-card>
+                                <div class="d-flex flex-column mt-2">
+                                    <v-text-field class="mx-auto" style="width:95%;" label="部门名称" variant="underlined"
+                                        v-model="addDp.department_name"></v-text-field>
+                                    <v-text-field class="mx-auto" style="width:95%;" label="部门介绍"
+                                        v-model="addDp.department_intro" variant="underlined"></v-text-field>
+                                    <v-text-field class="mx-auto" style="width:95%;" label="部长姓名"
+                                        v-model="addDp.leader_name" variant="underlined"></v-text-field>
+                                    <v-text-field class="mx-auto" style="width:95%;" label="部长电话"
+                                        v-model="addDp.leader_phone" variant="underlined"></v-text-field>
+                                    <v-text-field class="mx-auto" style="width:95%;" label="部长QQ" v-model="addDp.leader_qq"
+                                        variant="underlined"></v-text-field>
+                                    <v-text-field class="mx-auto" style="width:95%;" label="招新群号"
+                                        v-model="addDp.recruit_qq_group" variant="underlined"></v-text-field>
+                                </div>
+                                <v-card-actions>
+                                    <v-spacer></v-spacer>
+                                    <v-btn color="blue-darken-1" variant="text" @click="addDeparmentDialog = false">
+                                        关闭
+                                    </v-btn>
+                                    <v-btn color="blue-darken-1" variant="text" @click="addDeparment">
+                                        提交
+                                    </v-btn>
+                                </v-card-actions>
+                            </v-card>
+                        </v-dialog>
                         <v-btn v-if="navTabValue == 'recruitInfo'" @click="copyAllPhones"
                             variant="outlined">复制该阶段所有人电话号码</v-btn>
                         <v-dialog v-model="addRctPlaceDialog" persistent width="420">
@@ -55,10 +85,10 @@
                         </v-dialog>
                     </template>
                     <template v-if="navTabValue == 'recruitInfo' || navTabValue == 'recruitPlace'" v-slot:extension>
-                        <v-tabs class="mx-auto" v-model="curRctPhaseState" color="black" @click="switchCurRctPhaseState">
+                        <v-tabs class="mx-auto" v-model="curRctPhaseState" color="black">
                             <v-tab v-for="phase in departmentInfos[curDepartmentIndex].recruit_phase_list"
                                 :value="phase.state">
-                                {{ phase.name }}阶段
+                                {{ phase.phase_name }}阶段
                             </v-tab>
                         </v-tabs>
                     </template>
@@ -89,9 +119,10 @@
                 <v-main class="d-flex flex-column justify-center" style="min-height: 100vh;width: 100vw;" min-height="700">
 
                     <div v-show="navTabValue == 'dpIntro'" class="align-center" style="width:100%;">
-                        <v-card elevation="0" max-width="60vw" max-height="800px" class="mx-auto">
-                            <v-carousel hide-delimiters :show-arrows="carouselArrowShow">
-                                <v-carousel-item cover v-for="dpInfo in departmentInfos" :key="dpInfo.index">
+                        <v-card elevation="0" max-width="60vw" max-height="800px" min-width="400px" class="mx-auto">
+                            <v-carousel v-model="curDepartmentIndex" hide-delimiters :show-arrows="carouselArrowShow">
+                                <v-carousel-item cover v-for="dpInfo of departmentInfos" :key="dpInfo.department_id"
+                                    @click="dialogEditDeparmentInfo(dpInfo)">
                                     <v-card color="black" height="100%">
                                         <v-card-title>
                                             {{ dpInfo.department_name }}
@@ -108,10 +139,48 @@
                                         <v-card-text>
                                             部门介绍：{{ dpInfo.department_intro }}
                                         </v-card-text>
+
+                                        <v-card-actions class="d-flex justify-center">
+                                            <v-btn variant="outlined" width="40%"
+                                                @click.stop="delDepartment(dpInfo.department_id)">
+                                                删除部门
+                                            </v-btn>
+                                        </v-card-actions>
                                     </v-card>
                                 </v-carousel-item>
                             </v-carousel>
                         </v-card>
+                        <v-dialog v-model="editDeparmentDialog" persistent width="420">
+                            <v-card>
+                                <div class="d-flex flex-column mt-2">
+                                    <v-text-field class="mx-auto" style="width:95%;" label="部门名称" variant="underlined"
+                                        v-model="editDp.department_name"></v-text-field>
+                                    <v-text-field class="mx-auto" style="width:95%;" label="部门介绍"
+                                        v-model="editDp.department_intro" variant="underlined"></v-text-field>
+                                    <v-text-field class="mx-auto" style="width:95%;" label="部长姓名"
+                                        v-model="editDp.leader_name" variant="underlined"></v-text-field>
+                                    <v-text-field class="mx-auto" style="width:95%;" label="部长电话"
+                                        v-model="editDp.leader_phone" variant="underlined"></v-text-field>
+                                    <v-text-field class="mx-auto" style="width:95%;" label="部长QQ" v-model="editDp.leader_qq"
+                                        variant="underlined"></v-text-field>
+                                    <v-text-field class="mx-auto" style="width:95%;" label="招新群号"
+                                        v-model="editDp.recruit_qq_group" variant="underlined"></v-text-field>
+
+                                    <v-chip-group v-model="editDpRctPhase" column multiple>
+                                        <v-chip filter variant="outlined">asdf</v-chip>
+                                    </v-chip-group>
+                                </div>
+                                <v-card-actions>
+                                    <v-spacer></v-spacer>
+                                    <v-btn color="blue-darken-1" variant="text" @click="editDeparmentDialog = false">
+                                        关闭
+                                    </v-btn>
+                                    <v-btn color="blue-darken-1" variant="text" @click="editDeparmentInfo">
+                                        提交
+                                    </v-btn>
+                                </v-card-actions>
+                            </v-card>
+                        </v-dialog>
                     </div>
 
 
@@ -292,18 +361,31 @@
 
 <script>
 import BScroll from '@better-scroll/core'
+import axios from 'Axios';
 
 export default {
     data: () => ({
         // app bar配置数据
         appBarNavIconShow: false,
-        navTabValue: "recruitInfo",
+        navTabValue: "dpIntro",
         drawer: true,
         mobile: false,
         // 部门信息配置数据
         carouselArrowShow: false,
         departmentInfos: [],
         curDepartmentIndex: 0,
+        addDeparmentDialog: false,
+        addDp: {},
+        editDeparmentDialog: false,
+        editDp: {},
+        editDpRctPhase: [],
+        enableDpRctPhase: [
+            { phase_name: "一面", state: 100 },
+            { phase_name: "二面", state: 105 },
+            { phase_name: "三面", state: 110 },
+            { phase_name: "笔试", state: 200 },
+            { phase_name: "实操", state: 300 },
+        ],
         // 招生信息配置数据
         curRctPhaseStuInfos: [],
         curRctStuIndex: 0,
@@ -325,7 +407,7 @@ export default {
     }),
     created: function () {
         this.getDepartmentInfos();
-        this.getRctStuInfos();
+        // this.getRctStuInfos();
         this.getRecruitPlaceInfos();
     },
     mounted: function () {
@@ -338,9 +420,6 @@ export default {
         if (document.body.clientWidth < 1262) {
             this.appBarNavIconShow = true
             this.drawer = false
-        }
-        if (this.departmentInfos.length > 1) {
-            this.carouselArrowShow = true
         }
         this.init();
     },
@@ -375,39 +454,113 @@ export default {
         //==============================================部门信息部分=============================================================
         getDepartmentInfos() {
             // 获取部门信息
-            let tmpDpInfos = [{
+            // 需给carousel组件初始值，否则岂不会加载出来
+            this.departmentInfos = [{
                 department_id: 1,
-                department_name: "雁祉作坊",
-                department_intro: "雁祉作坊，好！起源于德国工艺，经数百年沉淀，由无数能工巧匠协力打造。百年好品牌雁祉作坊，好！起源于德国工艺，经数百年沉淀，由无数能工巧匠协力打造。百年好品牌雁祉作坊，好！起源于德国工艺，经数百年沉淀，由无数能工巧匠协力打造。百年好品牌",
-                recruit_qq_group: "1417846574",
-                leader_name: "徐虎萨",
-                leader_phone: "15612365245",
-                leader_qq: "770166546",
+                department_name: "",
+                department_intro: "",
+                recruit_qq_group: "",
+                leader_name: "",
+                leader_phone: "",
+                leader_qq: "",
                 recruit_phase_list: [
                     { id: 1, name: "笔试", state: 2 },
                     { id: 9, name: "实操", state: 3 },
                     { id: 2, name: "面试", state: 1 },
                 ]
             }]
-            for (let i = 0; i < tmpDpInfos.length; i++) {
-                tmpDpInfos[i].recruit_phase_list.sort((x, y) => x.state - y.state);
-            }
-            this.departmentInfos = tmpDpInfos
-            this.curDepartmentIndex = 0
+            axios({
+                url: "http://localhost:8081/dep/getdepartmentsinfo",
+                method: "get",
+            }).then(response => {
+                console.log(response.data)
+                let tmpDpInfos = response.data.departments
+                for (let i = 0; i < tmpDpInfos.length; i++) {
+                    tmpDpInfos[i].recruit_phase_list.sort((x, y) => x.state - y.state);
+                }
+                this.departmentInfos = tmpDpInfos
+                if (this.departmentInfos.length > 1 && !this.isMobile()) {
+                    this.carouselArrowShow = true
+                } else {
+                    this.carouselArrowShow = false
+                }
+                this.curDepartmentIndex = 0
+            })
         },
-
+        addDeparment() {
+            if (this.addDp.department_name == "") return;
+            axios({
+                url: "http://localhost:8081/dep/adddepartment",
+                method: "post",
+                data: {
+                    department_name: this.addDp.department_name,
+                    department_intro: this.addDp.department_intro,
+                    leader_name: this.addDp.leader_name,
+                    leader_qq: this.addDp.leader_qq,
+                    leader_phone: this.addDp.leader_phone,
+                    recruit_qq_group: this.addDp.recruit_qq_group,
+                }
+            }).then(response => {
+                console.log(response)
+                this.addDeparmentDialog = false
+                this.getDepartmentInfos()
+            }).catch(error => {
+                console.log(error)
+            })
+        },
+        dialogEditDeparmentInfo(dpInfo) {
+            console.log(dpInfo, this.curDepartmentIndex)
+            this.editDeparmentDialog = true
+            this.editDp = dpInfo
+        },
+        editDeparmentInfo() {
+            if (this.editDp.department_name == "") return;
+            axios({
+                url: "http://localhost:8081/dep/editdepartment",
+                method: "post",
+                data: {
+                    department_id: this.editDp.department_id,
+                    department_name: this.editDp.department_name,
+                    department_intro: this.editDp.department_intro,
+                    leader_name: this.editDp.leader_name,
+                    leader_qq: this.editDp.leader_qq,
+                    leader_phone: this.editDp.leader_phone,
+                    recruit_qq_group: this.editDp.recruit_qq_group,
+                }
+            }).then(response => {
+                console.log(response)
+                this.editDeparmentDialog = false
+                this.getDepartmentInfos()
+            }).catch(error => {
+                console.log(error)
+            })
+        },
+        delDepartment(dpId) {
+            axios({
+                url: "http://localhost:8081/dep/deletedepartment",
+                method: "post",
+                data: {
+                    department_id: dpId,
+                }
+            }).then(response => {
+                console.log(response)
+                this.getDepartmentInfos()
+            }).catch(error => {
+                console.log(error)
+            })
+        },
         //==============================================招生信息部分=============================================================
         getRctStuInfos() {
             // 按部门id获取新生信息
             for (let dpInfo of this.departmentInfos) {
                 // dpInfo.department_id
                 let tmpStuInfos = [{
-                    user_id: 2,
+                    user_id: 100,
                     name: "安达信",
                     phone: "15612365245",
                     qq: "770166546",
                     adjustment: false,
-                    state: 1,
+                    state: 100,
                     self_intro: "陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人",
                     register_departments: { "One Echo": 1, "workshop": 2 },
                 }, {
@@ -416,7 +569,7 @@ export default {
                     phone: "15612365245",
                     qq: "770166546",
                     adjustment: false,
-                    state: 1,
+                    state: 100,
                     self_intro: "陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人",
                     register_departments: { "One Echo": 1, "workshop": 2 },
                 }, {
@@ -425,7 +578,7 @@ export default {
                     phone: "15612365245",
                     qq: "770166546",
                     adjustment: false,
-                    state: 1,
+                    state: 100,
                     self_intro: "陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人",
                     register_departments: { "One Echo": 1, "workshop": 2 },
                 }, {
@@ -434,7 +587,7 @@ export default {
                     phone: "15612365245",
                     qq: "770166546",
                     adjustment: false,
-                    state: 1,
+                    state: 100,
                     self_intro: "陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人",
                     register_departments: { "One Echo": 1, "workshop": 2 },
                 }, {
@@ -443,7 +596,7 @@ export default {
                     phone: "15612365245",
                     qq: "770166546",
                     adjustment: false,
-                    state: 1,
+                    state: 100,
                     self_intro: "陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人",
                     register_departments: { "One Echo": 1, "workshop": 2 },
                 }, {
@@ -452,7 +605,7 @@ export default {
                     phone: "15612365245",
                     qq: "770166546",
                     adjustment: false,
-                    state: 1,
+                    state: 100,
                     self_intro: "陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人",
                     register_departments: { "One Echo": 1, "workshop": 2 },
                 }, {
@@ -461,7 +614,7 @@ export default {
                     phone: "15612365245",
                     qq: "770166546",
                     adjustment: false,
-                    state: 1,
+                    state: 100,
                     self_intro: "陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人",
                     register_departments: { "One Echo": 1, "workshop": 2 },
                 }, {
@@ -470,7 +623,7 @@ export default {
                     phone: "15612365245",
                     qq: "770166546",
                     adjustment: false,
-                    state: 1,
+                    state: 100,
                     self_intro: "陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人",
                     register_departments: { "One Echo": 1, "workshop": 2 },
                 }, {
@@ -479,7 +632,7 @@ export default {
                     phone: "15612365245",
                     qq: "770166546",
                     adjustment: false,
-                    state: 1,
+                    state: 100,
                     self_intro: "陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人",
                     register_departments: { "One Echo": 1, "workshop": 2 },
                 }, {
@@ -488,7 +641,7 @@ export default {
                     phone: "15612365245",
                     qq: "770166546",
                     adjustment: false,
-                    state: 1,
+                    state: 100,
                     self_intro: "陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人",
                     register_departments: { "One Echo": 1, "workshop": 2 },
                 }, {
@@ -497,89 +650,9 @@ export default {
                     phone: "15612365245",
                     qq: "770166546",
                     adjustment: false,
-                    state: 1,
+                    state: 100,
                     self_intro: "陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人",
                     register_departments: { "One Echo": 1, "workshop": 2 },
-                },
-                {
-                    user_id: 3,
-                    name: "就离开",
-                    phone: "15612365245",
-                    qq: "770166546",
-                    adjustment: false,
-                    state: 2,
-                    self_intro: "陈昱辰是个好人，陈昱辰是个好人，陈昱辰好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人",
-                    register_departments: { "One Echo": 1, "workshop": 2 }
-                },
-                {
-                    user_id: 4,
-                    name: "表达式",
-                    phone: "15612365245",
-                    qq: "770166546",
-                    adjustment: false,
-                    state: 1,
-                    self_intro: "陈人，陈昱辰是个好人，陈昱辰是个好人，陈昱",
-                    register_departments: { "One Echo": 1, "workshop": 2 }
-                },
-                {
-                    user_id: 5,
-                    name: "安达信",
-                    phone: "15612365245",
-                    qq: "770166546",
-                    adjustment: false,
-                    state: 1,
-                    self_intro: "陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人",
-                    register_departments: { "One Echo": 1, "workshop": 2 },
-                },
-                {
-                    user_id: 6,
-                    name: "就离开",
-                    phone: "15612365245",
-                    qq: "770166546",
-                    adjustment: false,
-                    state: 2,
-                    self_intro: "陈昱辰是个好人，陈昱辰是个好人，陈昱辰好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人",
-                    register_departments: { "One Echo": 1, "workshop": 2 }
-                },
-                {
-                    user_id: 7,
-                    name: "表达式",
-                    phone: "15612365245",
-                    qq: "770166546",
-                    adjustment: false,
-                    state: 1,
-                    self_intro: "陈人，陈昱辰是个好人，陈昱辰是个好人，陈昱",
-                    register_departments: { "One Echo": 1, "workshop": 2 }
-                },
-                {
-                    user_id: 8,
-                    name: "安达信",
-                    phone: "15612365245",
-                    qq: "770166546",
-                    adjustment: false,
-                    state: 2,
-                    self_intro: "陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人",
-                    register_departments: { "One Echo": 1, "workshop": 2 },
-                },
-                {
-                    user_id: 9,
-                    name: "就离开",
-                    phone: "15612365245",
-                    qq: "770166546",
-                    adjustment: false,
-                    state: 2,
-                    self_intro: "陈昱辰是个好人，陈昱辰是个好人，陈昱辰好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人",
-                    register_departments: { "One Echo": 1, "workshop": 2 }
-                },
-                {
-                    user_id: 10,
-                    name: "表达式",
-                    phone: "15612365245",
-                    qq: "770166546",
-                    adjustment: false,
-                    state: 2,
-                    self_intro: "陈人，陈昱辰是个好人，陈昱辰是个好人，陈昱",
-                    register_departments: { "One Echo": 1, "workshop": 2 }
                 }]
                 // 获取全部信息后按 面试/笔试 等阶段分组
                 this.recruitStuInfos[dpInfo.department_id] = []
@@ -655,6 +728,7 @@ export default {
         switchCurRctStuIndex(index) {
             console.log(index)
             this.curRctStuIndex = index
+            return index
         },
         // 网站需要HTTPS加密才可使用该功能
         copyAllPhones() {

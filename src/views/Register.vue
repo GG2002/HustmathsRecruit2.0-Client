@@ -2,65 +2,64 @@
     <v-sheet class="bg-deep pa-12">
         <v-card class="mx-auto px-6 py-8" max-width="344" variant="outlined">
             <v-card-title>{{ currentTitle }}</v-card-title>
-            <v-window v-model="step">
+            <v-window v-model="userFormStep">
                 <v-window-item :value="1">
-                    <v-form v-model="form" @submit.prevent="onSubmit">
-                        <v-text-field v-model="username" label="用户名" :readonly="loading" :rules="[required]"
+                    <v-form v-model="userInfoForm" @submit.prevent="userInfoSubmit">
+                        <v-text-field v-model="username" label="用户名" :readonly="formLoading" :rules="[required]"
                             :error-messages="unameExisted ? '用户名已存在' : ''" @input="checkUsername" clearable></v-text-field>
-                        <v-text-field v-model="password" label="密码" :append-inner-icon="show ? 'mdi-eye' : 'mdi-eye-off'"
-                            :type="show ? 'text' : 'password'" @click:append-inner="show = !show" :readonly="loading"
-                            :rules="[required, repeatPwdEqual, pwdMin]" clearable></v-text-field>
+                        <v-text-field v-model="password" label="密码" :append-inner-icon="pwdShow ? 'mdi-eye' : 'mdi-eye-off'"
+                            :type="pwdShow ? 'text' : 'password'" @click:append-inner="pwdShow = !pwdShow"
+                            :readonly="formLoading" :rules="[required, repeatPwdEqual, pwdMin]" clearable></v-text-field>
                         <v-text-field v-model="repeatPassword" label="确认密码"
-                            :append-inner-icon="show ? 'mdi-eye' : 'mdi-eye-off'" :type="show ? 'text' : 'password'"
-                            @click:append-inner="show = !show" :readonly="loading" :rules="[required, repeatPwdEqual]"
-                            clearable></v-text-field>
+                            :append-inner-icon="pwdShow ? 'mdi-eye' : 'mdi-eye-off'" :type="pwdShow ? 'text' : 'password'"
+                            @click:append-inner="pwdShow = !pwdShow" :readonly="formLoading"
+                            :rules="[required, repeatPwdEqual]" clearable></v-text-field>
                     </v-form>
                 </v-window-item>
                 <v-window-item :value="2">
-                    <v-text-field v-model="truename" label="真实姓名" :readonly="loading" :rules="[required]"
-                        clearable></v-text-field>
-                    <v-text-field v-model="phone" label="电话号码" :readonly="loading" :rules="[required]"
-                        clearable></v-text-field>
-                    <v-text-field v-model="qq" label="QQ" :readonly="loading" :rules="[required]" clearable></v-text-field>
-                    <v-text-field v-model="selfinto" label="自我介绍" :readonly="loading" messages="非必填项..."
-                        clearable></v-text-field>
-                    <v-combobox v-model="select" :items="items" label="选择部门" multiple>
-                        <template v-slot:selection="data">
-                            <v-chip :key="JSON.stringify(data.item)" v-bind="data.attrs" :model-value="data.selected"
-                                :disabled="data.disabled" size="small" @click:close="data.parent.selectItem(data.item)">
-                                <template v-slot:prepend>
-                                    <v-avatar class="bg-accent text-uppercase" start>{{ data.item.title.slice(0, 1)
-                                    }}</v-avatar>
-                                </template>
-                                {{ data.item.title }}
-                            </v-chip>
-                        </template>
-                    </v-combobox>
-                    接受调剂
-                    <v-radio-group inline>
-                        <v-radio label="是" value="1"></v-radio>
-                        <v-radio label="否" value="2"></v-radio>
-                    </v-radio-group>
+                    <v-form v-model="userRctInfoForm" @submit.prevent="userRctInfoSubmit">
+                        <v-text-field v-model="truename" label="真实姓名" :readonly="formLoading" :rules="[required]"
+                            clearable></v-text-field>
+                        <v-text-field v-model="phone" label="电话号码" :readonly="formLoading" :rules="[required]"
+                            clearable></v-text-field>
+                        <v-text-field v-model="qq" label="QQ" :readonly="formLoading" :rules="[required]"
+                            clearable></v-text-field>
+                        <v-text-field v-model="selfintro" label="自我介绍" :readonly="formLoading" messages="非必填项..."
+                            clearable></v-text-field>
+                        <v-combobox v-model="registerDepartments" :items="departments" label="选择部门" multiple>
+                            <template v-slot:selection="data">
+                                <v-chip :key="JSON.stringify(data.item)" v-bind="data.attrs" :model-value="data.selected"
+                                    :disabled="data.disabled" size="small" @click:close="data.parent.selectItem(data.item)">
+                                    <template v-slot:prepend>
+                                        <v-avatar class="bg-accent text-uppercase" start>{{ data.item.title.slice(0, 1)
+                                        }}</v-avatar>
+                                    </template>
+                                    {{ data.item.title }}
+                                </v-chip>
+                            </template>
+                        </v-combobox>
+                        接受调剂
+                        <v-radio-group inline v-model="adjustment" :rules="[required]">
+                            <v-radio label="是" :value="true"></v-radio>
+                            <v-radio label="否" :value="false"></v-radio>
+                        </v-radio-group>
+                    </v-form>
                 </v-window-item>
                 <v-window-item :value="3">
-                    Hello World!
+                    报名成功
                 </v-window-item>
             </v-window>
             <br>
 
-            <v-btn v-if="step < 3" color="primary" variant="outlined" block @click="step++">
-                Next
-            </v-btn>
-            <v-btn v-if="step == 3" :disabled="!form || loading" :loading="loading" block size="large" type="submit"
-                variant="outlined">
-                注册
+            <v-btn variant="outlined" :disabled="formLoading" :loading="formLoading" block @click="switchUserFormStep">
+                提交
             </v-btn>
         </v-card>
     </v-sheet>
-    <v-snackbar v-model="snackbar" multi-line>
+    <v-snackbar v-model="errSnackbar" multi-line>
         {{ errorText }}
         <template v-slot:actions>
-            <v-btn color="red" variant="text" @click="snackbar = false">
+            <v-btn color="red" variant="text" @click="errSnackbar = false">
                 Close
             </v-btn>
         </template>
@@ -73,46 +72,132 @@ import EncryptData from '../utils';
 
 export default {
     data: () => ({
-        form: false,
-        username: sessionStorage.getItem("tmp_username"),
+        // 全局数据
+        formLoading: false,
+        errSnackbar: false,
+        userFormStep: 1,
+        userLogIn: false,
+        // 用户注册数据
+        userInfoForm: false,
+        username: null,
+        unameExisted: false,
         password: null,
         repeatPassword: null,
-        loading: false,
-        unameExisted: false,
-        show: false,
-        snackbar: false,
-        truename: null,
-        phone: null,
-        qq: null,
-        selfinto: null,
-        select: ['策划部'],
-        items: [
+        pwdShow: false,
+        // 用户招新数据
+        userRctInfoForm: false,
+        truename: "null",
+        phone: "123533452",
+        qq: "634639823",
+        selfintro: null,
+        registerDepartments: ['策划部'],
+        adjustment: false,
+        departments: [
             '策划部',
             'One Echo',
             '雁祉作坊',
         ],
-        step: 1,
     }),
-    created: async () => {
-        sessionStorage.removeItem("tmp_username")
+    created: async function () {
+        if ($cookies.isKey("sso_token")) {
+            // 检验登录状态
+            await axios({
+                url: 'http://localhost:8081/logcheck',
+                method: 'post',
+                withCredentials: true,
+            }).then((response) => {
+                // console.log(response)
+                if (response.data.hasOwnProperty("Error")) {
+                    // 未知错误
+                    console.log(response.data.Error)
+                    $cookies.remove("sso_token")
+                } else {
+                    // 验证成功
+                    this.userFormStep = 2
+                    this.userLogIn = true
+                }
+            }).catch(function (error) {
+                console.log(error);
+                switch (error.response.status) {
+                    case 340:
+                        // Token过期
+                        $cookies.remove("sso_token")
+                        break
+                    case 341:
+                        // Token错误或用户已下线
+                        $cookies.remove("sso_token")
+                        break
+                }
+            });
+        }
     },
     methods: {
-        onSubmit() {
+        userInfoSubmit() {
+            console.log("userInfoSubmit")
+        },
+        userRctInfoSubmit() {
+            console.log("userRctInfoSubmit")
+        },
+        switchUserFormStep() {
+            switch (this.userFormStep) {
+                case 1:
+                    if (!this.userInfoForm) return
+                    this.userFormStep++
+                    break
+                case 2:
+                    if (!this.userRctInfoForm) return
+                    if (this.userLogIn) {
+                        let userRctData = JSON.stringify({
+                            truename: this.truename,
+                            phone: this.phone,
+                            qq: this.qq,
+                            self_intro: this.selfintro,
+                            register_departments: this.registerDepartments,
+                            adjustment: this.adjustment
+                        })
+                        console.log(userRctData)
+                        axios({
+                            url: "http://localhost:8081/register",
+                            method: "post",
+                            data: userRctData,
+                            withCredentials: true
+                        }).then(() => {
+                            console.log("Register complete!")
 
+                            this.userFormStep++
+                        }).catch((error) => {
+                            console.log(error)
+                        })
+                        GetRegisterDataByTrueNameAndPhone
+                    } else {
+                        let userRctData = JSON.stringify({
+                            username: this.username,
+                            password: this.password,
+                            truename: this.truename,
+                            phone: this.phone,
+                            qq: this.qq,
+                            selfintro: this.selfintro,
+                            registerDepartments: this.registerDepartments,
+                            adjustment: this.adjustment
+                        })
+                        this.userFormStep++
+
+                    }
+                    break
+            }
         },
         checkUsername() {
             let userData = JSON.stringify({
                 username: this.username,
             })
             let encrpytedData = EncryptData(userData)
-            // console.log(userData, encrpytedData)
 
             axios({
-                url: 'http://localhost:8080/sign/usernameexisted',
+                url: 'http://localhost:8081/reg/usernameexisted',
                 method: 'post',
                 data: encrpytedData,
             }).then(response => {
-                // console.log(response)
+                console.log(response)
                 this.unameExisted = false;
             }).catch((error) => {
                 if (error.response.status == 337) {
@@ -132,10 +217,10 @@ export default {
     },
     computed: {
         currentTitle() {
-            switch (this.step) {
+            switch (this.userFormStep) {
                 case 1: return '注册科协通行证'
                 case 2: return '填写报名信息'
-                default: return 'Welcome'
+                case 3: return '欢迎'
             }
         },
     },

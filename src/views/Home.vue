@@ -1,5 +1,7 @@
 <template>
   <v-btn @click="LogIn">登录</v-btn>
+  <v-btn @click="()=>{this.$router.push('admin')}">管理</v-btn>
+  <v-btn @click="()=>{this.$router.push('register')}">报名</v-btn>
 </template>
 
 <script>
@@ -9,9 +11,9 @@ export default {
   data: () => ({
   }),
   created: function() {
-    if (this.$route.query.hasOwnProperty("token")) {
+    if (this.$route.query.hasOwnProperty("sso_token")) {
       $cookies.config("24h")
-      $cookies.set("sso_token", this.$route.query.token)
+      $cookies.set("sso_token", this.$route.query.sso_token)
       axios({
         url: 'http://localhost:8081/logcheck',
         method: 'post',
@@ -45,7 +47,7 @@ export default {
   },
   methods: {
     LogIn() {
-      window.location.href = "http://localhost:3000?redirecturi=" + window.location.href
+      window.location.href = "http://localhost:3333?redirecturi=" + window.location.href
     },
   }
 }
