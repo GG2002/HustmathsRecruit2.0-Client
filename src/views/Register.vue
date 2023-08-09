@@ -24,9 +24,10 @@
                             clearable></v-text-field>
                         <v-text-field v-model="qq" label="QQ" :readonly="formLoading" :rules="[required]"
                             clearable></v-text-field>
-                        <v-text-field v-model="selfintro" label="自我介绍" :readonly="formLoading" messages="非必填项..."
-                            clearable></v-text-field>
-                        <v-combobox v-model="registerDepartments" :items="departments" label="选择部门" multiple>
+                        <v-text-field class="mb-3" v-model="selfintro" label="自我介绍" :readonly="formLoading"
+                            messages="非必填项..." clearable></v-text-field>
+                        <v-combobox v-model="registerDepartments" :items="departments" label="选择部门"
+                            item-title="department_name" item-value="department_id" multiple>
                             <template v-slot:selection="data">
                                 <v-chip :key="JSON.stringify(data.item)" v-bind="data.attrs" :model-value="data.selected"
                                     :disabled="data.disabled" size="small" @click:close="data.parent.selectItem(data.item)">
@@ -40,8 +41,8 @@
                         </v-combobox>
                         接受调剂
                         <v-radio-group inline v-model="adjustment" :rules="[required]">
-                            <v-radio label="是" :value="true"></v-radio>
-                            <v-radio label="否" :value="false"></v-radio>
+                            <v-radio label="是" :value="2"></v-radio>
+                            <v-radio label="否" :value="1"></v-radio>
                         </v-radio-group>
                     </v-form>
                 </v-window-item>
@@ -90,12 +91,10 @@ export default {
         phone: "123533452",
         qq: "634639823",
         selfintro: null,
-        registerDepartments: ['策划部'],
+        registerDepartments: [],
         adjustment: false,
         departments: [
-            '策划部',
-            'One Echo',
-            '雁祉作坊',
+            { department_id: 1, department_name: '策划部' },
         ],
     }),
     created: async function () {
@@ -130,6 +129,27 @@ export default {
                 }
             });
         }
+        if (this.userLogIn) {
+            await axios({
+                url: "http://localhost:8081/reg/registeredornot",
+                method: "post",
+                withCredentials: true,
+            }).then(response => {
+                console.log(response)
+                // 状态码为201代表已报名
+                if (response.status == 201) {
+                    this.userFormStep = 3
+                }
+            }).catch(error => {
+                console.log(error)
+            })
+        }
+        axios({
+            url: "http://localhost:8081/dep/getdepartmentsnamelist",
+            method: "get",
+        }).then(response => {
+            this.departments = response.data.departments
+        })
     },
     methods: {
         userInfoSubmit() {
@@ -145,6 +165,7 @@ export default {
                     this.userFormStep++
                     break
                 case 2:
+                    console.log(this.registerDepartments, this.userRctInfoForm)
                     if (!this.userRctInfoForm) return
                     if (this.userLogIn) {
                         let userRctData = JSON.stringify({
@@ -153,8 +174,9 @@ export default {
                             qq: this.qq,
                             self_intro: this.selfintro,
                             register_departments: this.registerDepartments,
-                            adjustment: this.adjustment
+                            adjustment: this.adjustment == 2 ? true : false
                         })
+
                         console.log(userRctData)
                         axios({
                             url: "http://localhost:8081/register",
@@ -168,7 +190,6 @@ export default {
                         }).catch((error) => {
                             console.log(error)
                         })
-                        GetRegisterDataByTrueNameAndPhone
                     } else {
                         let userRctData = JSON.stringify({
                             username: this.username,
