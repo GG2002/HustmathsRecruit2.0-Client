@@ -8,10 +8,11 @@ import axios from 'Axios'
 export default {
   created: async function () {
     // localStorage.clear()
+    // return
     if (!localStorage.getItem("rsaPubKey")) {
       // 获取公钥进行RSA加密
       await axios({
-        url: 'http://localhost:8081/getpubkey',
+        url: 'http://hustmaths.top/rct/getpubkey',
         method: 'post',
       }).then(response => {
         // console.log(response)
@@ -23,7 +24,7 @@ export default {
     if ($cookies.isKey("sso_token")) {
       // 检验登录状态
       await axios({
-        url: 'http://localhost:8081/logcheck',
+        url: 'http://hustmaths.top/rct/logcheck',
         method: 'post',
         withCredentials: true,
       }).then(response => {

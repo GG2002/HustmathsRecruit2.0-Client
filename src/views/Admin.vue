@@ -438,8 +438,6 @@ export default {
     created: async function () {
         this.getDepartmentInfos();
         // this.getRecruitPlaceInfos();
-    },
-    mounted: function () {
         if (this.isMobile()) {
             // 当前设备是移动设备
             this.appBarNavIconShow = true
@@ -450,6 +448,8 @@ export default {
             this.appBarNavIconShow = true
             this.drawer = false
         }
+    },
+    mounted: function () {
         this.init();
     },
     beforeDestroy() {
@@ -499,7 +499,7 @@ export default {
                 ]
             }]
             axios({
-                url: "http://localhost:8081/dep/getdepartmentsinfo",
+                url: "http://hustmaths.top/rct/dep/getdepartmentsinfo",
                 method: "get",
             }).then(response => {
                 // console.log(response.data)
@@ -526,7 +526,7 @@ export default {
                 this.addDp.recruit_phase_list.push(this.enableDpRctPhase[tmpPhase_i])
             }
             axios({
-                url: "http://localhost:8081/dep/adddepartment",
+                url: "http://hustmaths.top/rct/dep/adddepartment",
                 method: "post",
                 data: this.addDp
             }).then(response => {
@@ -575,7 +575,7 @@ export default {
             }
             this.editDp.phase_changed = phaseChanged
             axios({
-                url: "http://localhost:8081/dep/editdepartment",
+                url: "http://hustmaths.top/rct/dep/editdepartment",
                 method: "post",
                 data: this.editDp
             }).then(response => {
@@ -589,7 +589,7 @@ export default {
         },
         delDepartment(dpId) {
             axios({
-                url: "http://localhost:8081/dep/deletedepartment",
+                url: "http://hustmaths.top/rct/dep/deletedepartment",
                 method: "post",
                 data: {
                     department_id: dpId,
@@ -635,7 +635,7 @@ export default {
                 //     register_departments: { "One Echo": 1, "workshop": 2 },
                 // }]
                 await axios({
-                    url: "http://localhost:8081/dep/getdepartmentregisterdata",
+                    url: "http://hustmaths.top/rct/dep/getdepartmentregisterdata",
                     method: "post",
                     data: {
                         "department_id": dpInfo.department_id
@@ -713,7 +713,7 @@ export default {
             })
             let encrpytedData = EncryptData(userData)
             axios({
-                url: "http://localhost:8081/reg/refuserecruitstu",
+                url: "http://hustmaths.top/rct/reg/refuserecruitstu",
                 method: "post",
                 data: encrpytedData
             }).then(response => {
@@ -732,7 +732,7 @@ export default {
             console.log(userData)
             let encrpytedData = EncryptData(userData)
             axios({
-                url: "http://localhost:8081/reg/passrecruitstu",
+                url: "http://hustmaths.top/rct/reg/passrecruitstu",
                 method: "post",
                 data: encrpytedData
             }).then(response => {
@@ -832,7 +832,7 @@ export default {
             // ]
             for (let dpInfo of this.departmentInfos) {
                 await axios({
-                    url: "http://localhost:8081/rctplace/getrctplaceinfo",
+                    url: "http://hustmaths.top/rct/rctplace/getrctplaceinfo",
                     method: "post",
                     data: {
                         "department_id": dpInfo.department_id
@@ -883,7 +883,7 @@ export default {
             tmpRctPlaceInfo.person_num_limit = parseInt(tmpRctPlaceInfo.person_num_limit)
             console.log(tmpRctPlaceInfo)
             axios({
-                url: "http://localhost:8081/rctplace/addrctplaceinfo",
+                url: "http://hustmaths.top/rct/rctplace/addrctplaceinfo",
                 method: "post",
                 data: tmpRctPlaceInfo
             }).then(response => {
@@ -901,7 +901,7 @@ export default {
         editRctPlace() {
             this.editRctPlaceInfo.person_num_limit = parseInt(this.editRctPlaceInfo.person_num_limit)
             axios({
-                url: "http://localhost:8081/rctplace/editrctplaceinfo",
+                url: "http://hustmaths.top/rct/rctplace/editrctplaceinfo",
                 method: "post",
                 data: this.editRctPlaceInfo
             }).then(response => {
@@ -915,7 +915,7 @@ export default {
         delRctPlace(recruit_activity_id) {
             console.log(recruit_activity_id)
             axios({
-                url: "http://localhost:8081/rctplace/deleterctplaceinfo",
+                url: "http://hustmaths.top/rct/rctplace/deleterctplaceinfo",
                 method: "post",
                 data: {
                     "recruit_activity_id": recruit_activity_id,
