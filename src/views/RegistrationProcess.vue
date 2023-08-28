@@ -1,5 +1,5 @@
 <template>
-  <v-card class="mt-2 pa-2 mx-auto" variant="outlined" width="400">
+  <v-card class="mt-2 pa-2 mx-auto" variant="outlined" width="auto" max-width="400">
     <v-card-title>
       报名状态查询
     </v-card-title>
@@ -31,9 +31,9 @@
       <v-card-text>
         <v-window v-model="curDepartmentId">
           <v-window-item v-for="dpInfo in registeredDepartmentInfos" :value="dpInfo.department_id">
-            <v-timeline side="end" align="start">
+            <v-timeline side="end" align="start" v-if="dpInfo.rctstate > 47">
               <v-timeline-item :dot-color=PhaseDotColor(phase.status) size="small"
-                v-for="phase in dpInfo.recruit_phase_list">
+                v-for="phase in dpInfo.recruit_phase_list" @click="showPlaceChoice(phase.status)">
                 <div class="d-flex">
                   <strong class="me-4">{{ phase.phase_name }}</strong>
                   <div v-if="phase.status == 1">
@@ -51,13 +51,10 @@
                   <div v-else-if="phase.status == 3">
                     已通过
                   </div>
-                  <div v-else-if="phase.status == 4">
-                    <div>未通过</div>
-                    <div class="text-caption">来年再接再厉！</div>
-                  </div>
                 </div>
               </v-timeline-item>
             </v-timeline>
+            <div v-else style="text-align: center;">未通过，来年再接再厉！</div>
           </v-window-item>
         </v-window>
       </v-card-text>
@@ -66,6 +63,24 @@
       </v-card-actions>
     </div>
   </v-card>
+  <v-dialog v-model="placeChoiceDialog" width="auto" class="mx-auto">
+    <v-card>
+      <v-card-text>
+        <div class="d-flex justify-space-between align-center">
+          <div>
+            <div>
+              7.18 18:30
+            </div>
+            紫菘10东四楼东公房
+          </div>
+          <v-btn>选择</v-btn>
+        </div>
+      </v-card-text>
+      <v-card-actions>
+        <v-btn color="primary" block @click="placeChoiceDialog = false">Close Dialog</v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
 </template>
 
 <script>
@@ -76,11 +91,12 @@ export default {
     logRegStatus: 1, // 0未登录，1未报名，2已报名
     curDepartmentId: 0,
     registeredDepartmentInfos: [],
+    placeChoiceDialog: true,
   }),
   created: async function () {
     if ($cookies.isKey("sso_token")) {
       await axios({
-        url: 'http://hustmaths.top/rct/logcheck',
+        url: 'http://192.168.1.107:11452/logcheck',
         method: 'post',
         withCredentials: true,
       }).then(response => {
@@ -113,10 +129,11 @@ export default {
       }
 
       await axios({
-        url: 'http://hustmaths.top/rct/reg/registeredornot',
+        url: 'http://192.168.1.107:11452/reg/registeredornot',
         method: 'post',
         withCredentials: true,
       }).then(response => {
+        console.log(response)
         if (response.status == 200) {
           // 200状态码表示已报名
           this.logRegStatus = 1
@@ -132,7 +149,7 @@ export default {
       if (this.logRegStatus != 2) return
 
       await axios({
-        url: 'http://hustmaths.top/rct/reg/getregisterdepartmentsandphase',
+        url: 'http://192.168.1.107:11452/reg/getregisterdepartmentsandphase',
         method: 'post',
         withCredentials: true,
       }).then(response => {
@@ -146,9 +163,15 @@ export default {
       for (let dpInfo of this.registeredDepartmentInfos) {
         dpInfo.recruit_phase_list.sort((x, y) => x.state - y.state);
         for (let phase of dpInfo.recruit_phase_list) {
-          if (dpInfo.rctstate == 47) { phase.status = 4; continue; }
+          // 已通过
           if (phase.state < dpInfo.rctstate) { phase.status = 3; }
-          else if (phase.state == dpInfo.rctstate) { phase.status = 1; }
+          // 当前阶段
+          else if (phase.state == dpInfo.rctstate) {
+            phase.status = 1;
+            // 判断是否选择好场次
+            // phase.status = 2;
+          }
+          // 未来阶段
           else if (phase.state > dpInfo.rctstate) { phase.status = 0; }
         }
         console.log(dpInfo)
@@ -160,8 +183,12 @@ export default {
   },
   methods: {
     LogIn() {
-      // window.location.href = "http://localhost:3333?redirecturi=" + window.location.href
-      window.location.href = "http://hustmaths.top/ssolog?redirecturi=" + window.location.href
+      window.location.href = "http://localhost:3333?redirecturi=" + window.location.href
+      // window.location.href = "http://hustmaths.top/ssolog?redirecturi=" + window.location.href
+    },
+    showPlaceChoice(status) {
+      if (status != 1) return;
+      this.placeChoiceDialog = true;
     },
     PhaseDotColor(pstatus) {
       switch (pstatus) {

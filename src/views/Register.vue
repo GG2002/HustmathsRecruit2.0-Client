@@ -101,7 +101,7 @@ export default {
         if ($cookies.isKey("sso_token")) {
             // 检验登录状态
             await axios({
-                url: 'http://hustmaths.top/rct/logcheck',
+                url: 'http://192.168.1.107:11452/logcheck',
                 method: 'post',
                 withCredentials: true,
             }).then((response) => {
@@ -131,7 +131,7 @@ export default {
         }
         if (this.userLogIn) {
             await axios({
-                url: "http://hustmaths.top/rct/reg/registeredornot",
+                url: "http://192.168.1.107:11452/reg/registeredornot",
                 method: "post",
                 withCredentials: true,
             }).then(response => {
@@ -145,7 +145,7 @@ export default {
             })
         }
         axios({
-            url: "http://hustmaths.top/rct/dep/getdepartmentsnamelist",
+            url: "http://192.168.1.107:11452/dep/getdepartmentsnamelist",
             method: "get",
         }).then(response => {
             this.departments = response.data.departments
@@ -179,7 +179,7 @@ export default {
 
                         console.log(userRctData)
                         axios({
-                            url: "http://hustmaths.top/rct/register",
+                            url: "http://192.168.1.107:11452/register",
                             method: "post",
                             data: userRctData,
                             withCredentials: true
@@ -214,7 +214,7 @@ export default {
             let encrpytedData = EncryptData(userData)
 
             axios({
-                url: 'http://hustmaths.top/rct/reg/usernameexisted',
+                url: 'http://192.168.1.107:11452/reg/usernameexisted',
                 method: 'post',
                 data: encrpytedData,
             }).then(response => {

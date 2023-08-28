@@ -12,7 +12,7 @@ export default {
     if (!localStorage.getItem("rsaPubKey")) {
       // 获取公钥进行RSA加密
       await axios({
-        url: 'http://hustmaths.top/rct/getpubkey',
+        url: 'http://192.168.1.107:11452/getpubkey',
         method: 'post',
       }).then(response => {
         // console.log(response)
@@ -21,10 +21,15 @@ export default {
         console.log(error);
       });
     }
+    if (this.$route.query.hasOwnProperty("sso_token")) {
+      // console.log(this.$route.query.sso_token)
+      $cookies.config("24h")
+      $cookies.set("sso_token", this.$route.query.sso_token)
+    }
     if ($cookies.isKey("sso_token")) {
       // 检验登录状态
       await axios({
-        url: 'http://hustmaths.top/rct/logcheck',
+        url: 'http://192.168.1.107:11452/logcheck',
         method: 'post',
         withCredentials: true,
       }).then(response => {

@@ -499,7 +499,7 @@ export default {
                 ]
             }]
             axios({
-                url: "http://hustmaths.top/rct/dep/getdepartmentsinfo",
+                url: "http://192.168.1.107:11452/dep/getdepartmentsinfo",
                 method: "get",
             }).then(response => {
                 // console.log(response.data)
@@ -526,7 +526,7 @@ export default {
                 this.addDp.recruit_phase_list.push(this.enableDpRctPhase[tmpPhase_i])
             }
             axios({
-                url: "http://hustmaths.top/rct/dep/adddepartment",
+                url: "http://192.168.1.107:11452/dep/adddepartment",
                 method: "post",
                 data: this.addDp
             }).then(response => {
@@ -575,7 +575,7 @@ export default {
             }
             this.editDp.phase_changed = phaseChanged
             axios({
-                url: "http://hustmaths.top/rct/dep/editdepartment",
+                url: "http://192.168.1.107:11452/dep/editdepartment",
                 method: "post",
                 data: this.editDp
             }).then(response => {
@@ -589,7 +589,7 @@ export default {
         },
         delDepartment(dpId) {
             axios({
-                url: "http://hustmaths.top/rct/dep/deletedepartment",
+                url: "http://192.168.1.107:11452/dep/deletedepartment",
                 method: "post",
                 data: {
                     department_id: dpId,
@@ -635,7 +635,7 @@ export default {
                 //     register_departments: { "One Echo": 1, "workshop": 2 },
                 // }]
                 await axios({
-                    url: "http://hustmaths.top/rct/dep/getdepartmentregisterdata",
+                    url: "http://192.168.1.107:11452/dep/getdepartmentregisterdata",
                     method: "post",
                     data: {
                         "department_id": dpInfo.department_id
@@ -713,7 +713,7 @@ export default {
             })
             let encrpytedData = EncryptData(userData)
             axios({
-                url: "http://hustmaths.top/rct/reg/refuserecruitstu",
+                url: "http://192.168.1.107:11452/reg/refuserecruitstu",
                 method: "post",
                 data: encrpytedData
             }).then(response => {
@@ -732,7 +732,7 @@ export default {
             console.log(userData)
             let encrpytedData = EncryptData(userData)
             axios({
-                url: "http://hustmaths.top/rct/reg/passrecruitstu",
+                url: "http://192.168.1.107:11452/reg/passrecruitstu",
                 method: "post",
                 data: encrpytedData
             }).then(response => {
@@ -832,7 +832,7 @@ export default {
             // ]
             for (let dpInfo of this.departmentInfos) {
                 await axios({
-                    url: "http://hustmaths.top/rct/rctplace/getrctplaceinfo",
+                    url: "http://192.168.1.107:11452/rctplace/getrctplaceinfo",
                     method: "post",
                     data: {
                         "department_id": dpInfo.department_id
@@ -883,7 +883,7 @@ export default {
             tmpRctPlaceInfo.person_num_limit = parseInt(tmpRctPlaceInfo.person_num_limit)
             console.log(tmpRctPlaceInfo)
             axios({
-                url: "http://hustmaths.top/rct/rctplace/addrctplaceinfo",
+                url: "http://192.168.1.107:11452/rctplace/addrctplaceinfo",
                 method: "post",
                 data: tmpRctPlaceInfo
             }).then(response => {
@@ -901,7 +901,7 @@ export default {
         editRctPlace() {
             this.editRctPlaceInfo.person_num_limit = parseInt(this.editRctPlaceInfo.person_num_limit)
             axios({
-                url: "http://hustmaths.top/rct/rctplace/editrctplaceinfo",
+                url: "http://192.168.1.107:11452/rctplace/editrctplaceinfo",
                 method: "post",
                 data: this.editRctPlaceInfo
             }).then(response => {
@@ -915,7 +915,7 @@ export default {
         delRctPlace(recruit_activity_id) {
             console.log(recruit_activity_id)
             axios({
-                url: "http://hustmaths.top/rct/rctplace/deleterctplaceinfo",
+                url: "http://192.168.1.107:11452/rctplace/deleterctplaceinfo",
                 method: "post",
                 data: {
                     "recruit_activity_id": recruit_activity_id,
