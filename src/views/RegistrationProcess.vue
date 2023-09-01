@@ -33,7 +33,8 @@
           <v-window-item v-for="dpInfo in registeredDepartmentInfos" :value="dpInfo.department_id">
             <v-timeline side="end" align="start" v-if="dpInfo.rctstate > 47">
               <v-timeline-item :dot-color=PhaseDotColor(phase.status) size="small"
-                v-for="phase in dpInfo.recruit_phase_list" @click="showPlaceChoice(phase.status)">
+                v-for="phase in dpInfo.recruit_phase_list"
+                @click="showPlaceChoice(phase.status, dpInfo.department_id, phase.state)">
                 <div class="d-flex">
                   <strong class="me-4">{{ phase.phase_name }}</strong>
                   <div v-if="phase.status == 1">
@@ -44,8 +45,8 @@
                   </div>
                   <div v-else-if="phase.status == 2">
                     <div class="text-caption">
-                      <div>7.18 18:30</div>
-                      紫菘10东四楼东公房
+                      <div>{{ phase.time }}</div>
+                      {{ phase.addr }}
                     </div>
                   </div>
                   <div v-else-if="phase.status == 3">
@@ -59,25 +60,29 @@
         </v-window>
       </v-card-text>
       <v-card-actions>
-        <v-btn variant="outlined" block @click="() => { this.$router.push('admin') }">♥管理♥</v-btn>
+        <!-- <v-btn variant="outlined" block @click="() => { this.$router.push('admin') }">♥管理♥</v-btn> -->
       </v-card-actions>
     </div>
   </v-card>
   <v-dialog v-model="placeChoiceDialog" width="auto" class="mx-auto">
     <v-card>
       <v-card-text>
-        <div class="d-flex justify-space-between align-center">
-          <div>
+        <div class="d-flex justify-space-between align-center mb-2" v-for="rctplace in curRctPlaceList">
+          <div class="mr-3">
             <div>
-              7.18 18:30
+              时间：{{ rctplace.time }}
             </div>
-            紫菘10东四楼东公房
+            <div>
+              地点：{{ rctplace.addr }}
+            </div>
           </div>
-          <v-btn>选择</v-btn>
+          <v-btn :disabled="!rctplace.enabled"
+            @click="chooseRctPlace(rctplace.recruit_activity_id, rctplace.state, curDepartmentId)">选择</v-btn>
         </div>
+        <div v-if="curRctPlaceList.length == 0">当前无测试场次，请等待部长发布。</div>
       </v-card-text>
       <v-card-actions>
-        <v-btn color="primary" block @click="placeChoiceDialog = false">Close Dialog</v-btn>
+        <v-btn color="primary" block @click="placeChoiceDialog = false">关闭</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
@@ -85,18 +90,20 @@
 
 <script>
 import axios from 'Axios'
+import EncryptData from '../utils';
 
 export default {
   data: () => ({
     logRegStatus: 1, // 0未登录，1未报名，2已报名
     curDepartmentId: 0,
     registeredDepartmentInfos: [],
-    placeChoiceDialog: true,
+    curRctPlaceList: [],
+    placeChoiceDialog: false,
   }),
   created: async function () {
     if ($cookies.isKey("sso_token")) {
       await axios({
-        url: 'http://192.168.1.107:11452/logcheck',
+        url: 'http://192.168.1.100:11452/logcheck',
         method: 'post',
         withCredentials: true,
       }).then(response => {
@@ -129,11 +136,11 @@ export default {
       }
 
       await axios({
-        url: 'http://192.168.1.107:11452/reg/registeredornot',
+        url: 'http://192.168.1.100:11452/reg/registeredornot',
         method: 'post',
         withCredentials: true,
       }).then(response => {
-        console.log(response)
+        // console.log(response)
         if (response.status == 200) {
           // 200状态码表示已报名
           this.logRegStatus = 1
@@ -149,11 +156,11 @@ export default {
       if (this.logRegStatus != 2) return
 
       await axios({
-        url: 'http://192.168.1.107:11452/reg/getregisterdepartmentsandphase',
+        url: 'http://192.168.1.100:11452/reg/getregisterdepartmentsandphase',
         method: 'post',
         withCredentials: true,
       }).then(response => {
-        console.log(response)
+        // console.log(response)
         this.registeredDepartmentInfos = response.data.departmentInfo
         this.curDepartmentId = this.registeredDepartmentInfos[0].department_id
       }).catch(error => {
@@ -169,12 +176,30 @@ export default {
           else if (phase.state == dpInfo.rctstate) {
             phase.status = 1;
             // 判断是否选择好场次
-            // phase.status = 2;
+            let userData = JSON.stringify({
+              "state": phase.state,
+              "department_id": dpInfo.department_id,
+            })
+            userData = EncryptData(userData)
+            axios({
+              url: "http://192.168.1.100:11452/reg/checkrctplacechosen",
+              method: "post",
+              data: userData,
+              withCredentials: true,
+            }).then(response => {
+              console.log(response.data)
+              if (!response.data.rct_place_info)
+                return
+              let rct_place_info = response.data.rct_place_info
+              phase.status = 2;
+              phase.time = rct_place_info.time
+              phase.addr = rct_place_info.addr
+            })
           }
           // 未来阶段
           else if (phase.state > dpInfo.rctstate) { phase.status = 0; }
         }
-        console.log(dpInfo)
+        // console.log(dpInfo)
       }
 
     } else {
@@ -183,12 +208,110 @@ export default {
   },
   methods: {
     LogIn() {
-      window.location.href = "http://localhost:3333?redirecturi=" + window.location.href
-      // window.location.href = "http://hustmaths.top/ssolog?redirecturi=" + window.location.href
+      // window.location.href = "http://localhost:3333?redirecturi=" + window.location.href
+      window.location.href = "http://hustmaths.top/ssolog?redirecturi=" + window.location.href
     },
-    showPlaceChoice(status) {
-      if (status != 1) return;
-      this.placeChoiceDialog = true;
+    showPlaceChoice(status, dpId, phaseState) {
+      console.log(11)
+      if (status != 1 && status != 2) return;
+      console.log(arguments)
+      axios({
+        url: "http://192.168.1.100:11452/rctplace/getrctplaceinfo",
+        method: "post",
+        data: {
+          "department_id": dpId,
+        }
+      }).then(response => {
+        this.placeChoiceDialog = true;
+        if (!response.data.rct_place_infos) return;
+        let tmpRctPlaceInfo = response.data.rct_place_infos;
+        let ttmp = [];
+        for (let placeInfo of tmpRctPlaceInfo) {
+          if (placeInfo.state == phaseState) {
+            let tmp = placeInfo.time.split(" ")
+            placeInfo.month = parseInt(tmp[0].split(".")[0])
+            placeInfo.day = parseInt(tmp[0].split(".")[1])
+            placeInfo.hour = parseInt(tmp[1].split(":")[0])
+            placeInfo.minute = parseInt(tmp[1].split(":")[1])
+            placeInfo.enabled = this.checkRctEnableRegister(placeInfo)
+            console.log(placeInfo, placeInfo.person_chosen_num >= placeInfo.person_num_limit, this.checkRctEnableRegister(placeInfo))
+            ttmp.push(placeInfo);
+          }
+        }
+        ttmp.sort((x, y) => {
+          if (y.month - x.month != 0) {
+            return y.month - x.month;
+          } else if (y.day - x.day != 0) {
+            return y.day - x.day;
+          } else if (y.hour - x.hour != 0) {
+            return y.hour - x.hour;
+          } else {
+            return y.minute - x.minute;
+          }
+        })
+        this.curRctPlaceList = ttmp;
+      })
+    },
+    checkRctEnableRegister(placeInfo) {
+      let d = new Date();
+      let dateCorrect = false;
+      if (placeInfo.month > d.getMonth()) dateCorrect = true;
+      else if (placeInfo.month < d.getMonth()) dateCorrect = false;
+      else if (placeInfo.day > d.getDate()) dateCorrect = true;
+      else if (placeInfo.day < d.getDate()) dateCorrect = false;
+      else if (placeInfo.hour > d.getHours()) dateCorrect = true;
+      else if (placeInfo.hour < d.getHours()) dateCorrect = false;
+      else if (placeInfo.minute > d.getMinutes()) dateCorrect = true;
+      else if (placeInfo.minute <= d.getMinutes()) return false;
+
+      if (placeInfo.person_chosen_num < placeInfo.person_num_limit) return true && dateCorrect;
+      return false;
+    },
+    chooseRctPlace(rctPlaceId, phaseState, dpId) {
+      console.log(rctPlaceId)
+      let userRctData = JSON.stringify({
+        "recruit_activity_id": rctPlaceId,
+        "state": phaseState,
+        "department_id": dpId,
+      })
+      userRctData = EncryptData(userRctData)
+      axios({
+        url: "http://192.168.1.100:11452/reg/chooserctplace",
+        method: "post",
+        data: userRctData,
+        withCredentials: true,
+      }).then(response => {
+        console.log(response)
+        this.placeChoiceDialog = false
+
+        let userData = JSON.stringify({
+          "state": phaseState,
+          "department_id": dpId,
+        })
+        userData = EncryptData(userData)
+        axios({
+          url: "http://192.168.1.100:11452/reg/checkrctplacechosen",
+          method: "post",
+          data: userData,
+          withCredentials: true,
+        }).then(response => {
+          console.log(response.data)
+          if (!response.data.rct_place_info)
+            return
+          let rct_place_info = response.data.rct_place_info
+          for (let t of this.registeredDepartmentInfos) {
+            if (t.department_id == this.curDepartmentId) {
+              for (let phase of t.recruit_phase_list) {
+                if (phase.state == phaseState) {
+                  phase.status = 2
+                  phase.time = rct_place_info.time
+                  phase.addr = rct_place_info.addr
+                }
+              }
+            }
+          }
+        })
+      })
     },
     PhaseDotColor(pstatus) {
       switch (pstatus) {

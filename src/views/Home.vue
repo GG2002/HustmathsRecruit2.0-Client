@@ -200,7 +200,7 @@ export default {
 我们想做的，<span style="color: rgb(8, 97, 163);font-style: normal;">没有边界</span>！
 来吧，准备好跟着我们跃入数据的深海。
 来吧，人生苦短,做点有意思的事！`,
-                department_image: "http://hustmaths.top/recruit/assets/onecho.png",
+                department_image: "http://192.168.1.100:11452/assets/onecho.png",
             },
             {
                 department_name: "雁祉作坊",
@@ -212,7 +212,7 @@ export default {
 平面设计、照片后期、影像创意...神迹将由你来创造。
 如果你也喜欢绘画，还可以享受全校唯一的电绘课哦☆
 在作坊，实现周边与产粮自由！`,
-                department_image: "http://hustmaths.top/recruit/assets/workshop.png",
+                department_image: "http://192.168.1.100:11452/assets/workshop.png",
             },
             {
                 department_name: "策划部",
@@ -225,7 +225,7 @@ export default {
 你尽可大胆设想。
 一款有着你的影子的小程序将带给你不可言表的成就感。
 风里雨里,策划部等你！！！`,
-                department_image: "http://hustmaths.top/recruit/assets/project.png",
+                department_image: "http://192.168.1.100:11452/assets/project.png",
             }
         ],
         currentPageIndex: 0,

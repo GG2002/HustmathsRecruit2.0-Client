@@ -319,6 +319,8 @@
                                                             场地：{{ placeInfo.addr }}
                                                             <br />
                                                             限制人数：{{ placeInfo.person_num_limit }}
+                                                            <br />
+                                                            已报名人数：{{ placeInfo.person_chosen_num }}
                                                         </v-card-text>
                                                         <v-card-text>
                                                             该场次人员：
@@ -499,10 +501,11 @@ export default {
                 ]
             }]
             axios({
-                url: "http://192.168.1.107:11452/dep/getdepartmentsinfo",
+                url: "http://192.168.1.100:11452/dep/getdepartmentsinfo",
                 method: "get",
             }).then(response => {
-                // console.log(response.data)
+                console.log(response.data)
+                if (!response.data.departments) return;
                 let tmpDpInfos = response.data.departments
                 for (let i = 0; i < tmpDpInfos.length; i++) {
                     tmpDpInfos[i].recruit_phase_list.sort((x, y) => x.state - y.state);
@@ -526,7 +529,7 @@ export default {
                 this.addDp.recruit_phase_list.push(this.enableDpRctPhase[tmpPhase_i])
             }
             axios({
-                url: "http://192.168.1.107:11452/dep/adddepartment",
+                url: "http://192.168.1.100:11452/dep/adddepartment",
                 method: "post",
                 data: this.addDp
             }).then(response => {
@@ -575,7 +578,7 @@ export default {
             }
             this.editDp.phase_changed = phaseChanged
             axios({
-                url: "http://192.168.1.107:11452/dep/editdepartment",
+                url: "http://192.168.1.100:11452/dep/editdepartment",
                 method: "post",
                 data: this.editDp
             }).then(response => {
@@ -589,7 +592,7 @@ export default {
         },
         delDepartment(dpId) {
             axios({
-                url: "http://192.168.1.107:11452/dep/deletedepartment",
+                url: "http://192.168.1.100:11452/dep/deletedepartment",
                 method: "post",
                 data: {
                     department_id: dpId,
@@ -605,37 +608,8 @@ export default {
         async getRctStuInfos() {
             // 按部门id获取新生信息
             for (let dpInfo of this.departmentInfos) {
-                // dpInfo.department_id
-                // let tmpStuInfos = [{
-                //     user_id: 100,
-                //     name: "安达信",
-                //     phone: "15612365245",
-                //     qq: "770166546",
-                //     adjustment: false,
-                //     state: 100,
-                //     self_intro: "陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人",
-                //     register_departments: { "One Echo": 1, "workshop": 2 },
-                // }, {
-                //     user_id: 2,
-                //     name: "安达信",
-                //     phone: "15612365245",
-                //     qq: "770166546",
-                //     adjustment: false,
-                //     state: 100,
-                //     self_intro: "陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人",
-                //     register_departments: { "One Echo": 1, "workshop": 2 },
-                // }, {
-                //     user_id: 2,
-                //     name: "安达信",
-                //     phone: "15612365245",
-                //     qq: "770166546",
-                //     adjustment: false,
-                //     state: 100,
-                //     self_intro: "陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人，陈昱辰是个好人",
-                //     register_departments: { "One Echo": 1, "workshop": 2 },
-                // }]
                 await axios({
-                    url: "http://192.168.1.107:11452/dep/getdepartmentregisterdata",
+                    url: "http://192.168.1.100:11452/dep/getdepartmentregisterdata",
                     method: "post",
                     data: {
                         "department_id": dpInfo.department_id
@@ -713,7 +687,7 @@ export default {
             })
             let encrpytedData = EncryptData(userData)
             axios({
-                url: "http://192.168.1.107:11452/reg/refuserecruitstu",
+                url: "http://192.168.1.100:11452/reg/refuserecruitstu",
                 method: "post",
                 data: encrpytedData
             }).then(response => {
@@ -732,7 +706,7 @@ export default {
             console.log(userData)
             let encrpytedData = EncryptData(userData)
             axios({
-                url: "http://192.168.1.107:11452/reg/passrecruitstu",
+                url: "http://192.168.1.100:11452/reg/passrecruitstu",
                 method: "post",
                 data: encrpytedData
             }).then(response => {
@@ -793,46 +767,9 @@ export default {
         },
         async getRecruitPlaceInfos() {
             // 按部门id和phase_id获取该阶段所有测试场次
-            // let tmpPlaceInfos = [
-            //     {
-            //         place_id: 1,
-            //         addr: "紫song10栋934",
-            //         time: "7.18 18:30",
-            //         person_num_limit: 6,
-            //         person_chosen: ["案发当", "去阿文", "阿斯顿"],
-            //     },
-            //     {
-            //         place_id: 21,
-            //         addr: "紫song1栋934",
-            //         time: "12.18 5:30",
-            //         person_num_limit: 6,
-            //         person_chosen: ["案发当", "去阿文", "阿斯顿"],
-            //     },
-            //     {
-            //         place_id: 9,
-            //         addr: "紫song4栋914",
-            //         time: "10.18 18:30",
-            //         person_num_limit: 6,
-            //         person_chosen: ["案发当", "去阿文", "阿斯顿"],
-            //     },
-            //     {
-            //         place_id: 4,
-            //         addr: "紫song4栋914",
-            //         time: "10.18 12:30",
-            //         person_num_limit: 6,
-            //         person_chosen: ["案发当", "去阿文", "阿斯顿"],
-            //     },
-            //     {
-            //         place_id: 3,
-            //         addr: "紫song14栋914",
-            //         time: "11.12 19:30",
-            //         person_num_limit: 6,
-            //         person_chosen: ["案发当", "去阿文", "阿斯顿"],
-            //     },
-            // ]
             for (let dpInfo of this.departmentInfos) {
                 await axios({
-                    url: "http://192.168.1.107:11452/rctplace/getrctplaceinfo",
+                    url: "http://192.168.1.100:11452/rctplace/getrctplaceinfo",
                     method: "post",
                     data: {
                         "department_id": dpInfo.department_id
@@ -883,7 +820,7 @@ export default {
             tmpRctPlaceInfo.person_num_limit = parseInt(tmpRctPlaceInfo.person_num_limit)
             console.log(tmpRctPlaceInfo)
             axios({
-                url: "http://192.168.1.107:11452/rctplace/addrctplaceinfo",
+                url: "http://192.168.1.100:11452/rctplace/addrctplaceinfo",
                 method: "post",
                 data: tmpRctPlaceInfo
             }).then(response => {
@@ -901,7 +838,7 @@ export default {
         editRctPlace() {
             this.editRctPlaceInfo.person_num_limit = parseInt(this.editRctPlaceInfo.person_num_limit)
             axios({
-                url: "http://192.168.1.107:11452/rctplace/editrctplaceinfo",
+                url: "http://192.168.1.100:11452/rctplace/editrctplaceinfo",
                 method: "post",
                 data: this.editRctPlaceInfo
             }).then(response => {
@@ -915,7 +852,7 @@ export default {
         delRctPlace(recruit_activity_id) {
             console.log(recruit_activity_id)
             axios({
-                url: "http://192.168.1.107:11452/rctplace/deleterctplaceinfo",
+                url: "http://192.168.1.100:11452/rctplace/deleterctplaceinfo",
                 method: "post",
                 data: {
                     "recruit_activity_id": recruit_activity_id,

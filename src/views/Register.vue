@@ -88,11 +88,11 @@ export default {
         // 用户招新数据
         userRctInfoForm: false,
         truename: "null",
-        phone: "123533452",
-        qq: "634639823",
+        phone: "",
+        qq: "",
         selfintro: null,
         registerDepartments: [],
-        adjustment: false,
+        adjustment: 2,
         departments: [
             { department_id: 1, department_name: '策划部' },
         ],
@@ -101,7 +101,7 @@ export default {
         if ($cookies.isKey("sso_token")) {
             // 检验登录状态
             await axios({
-                url: 'http://192.168.1.107:11452/logcheck',
+                url: 'http://192.168.1.100:11452/logcheck',
                 method: 'post',
                 withCredentials: true,
             }).then((response) => {
@@ -131,7 +131,7 @@ export default {
         }
         if (this.userLogIn) {
             await axios({
-                url: "http://192.168.1.107:11452/reg/registeredornot",
+                url: "http://192.168.1.100:11452/reg/registeredornot",
                 method: "post",
                 withCredentials: true,
             }).then(response => {
@@ -139,13 +139,14 @@ export default {
                 // 状态码为201代表已报名
                 if (response.status == 201) {
                     this.userFormStep = 3
+                    this.$router.push("/registrationprocess")
                 }
             }).catch(error => {
                 console.log(error)
             })
         }
         axios({
-            url: "http://192.168.1.107:11452/dep/getdepartmentsnamelist",
+            url: "http://192.168.1.100:11452/dep/getdepartmentsnamelist",
             method: "get",
         }).then(response => {
             this.departments = response.data.departments
@@ -179,7 +180,7 @@ export default {
 
                         console.log(userRctData)
                         axios({
-                            url: "http://192.168.1.107:11452/register",
+                            url: "http://192.168.1.100:11452/register",
                             method: "post",
                             data: userRctData,
                             withCredentials: true
@@ -187,6 +188,7 @@ export default {
                             console.log("Register complete!")
 
                             this.userFormStep++
+                            this.$router.push("/registrationprocess")
                         }).catch((error) => {
                             console.log(error)
                         })
@@ -214,7 +216,7 @@ export default {
             let encrpytedData = EncryptData(userData)
 
             axios({
-                url: 'http://192.168.1.107:11452/reg/usernameexisted',
+                url: 'http://192.168.1.100:11452/reg/usernameexisted',
                 method: 'post',
                 data: encrpytedData,
             }).then(response => {
