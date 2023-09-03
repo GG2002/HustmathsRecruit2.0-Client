@@ -17,8 +17,9 @@
       <v-card-text>
         欢迎米娜桑报名！(≧∇≦)b
       </v-card-text>
-      <v-card-actions>
-        <v-btn variant="outlined" block @click="() => { this.$router.push('register') }">(づ｡◕‿‿◕｡)づ报名</v-btn>
+      <v-card-actions class="d-flex flex-row justify-space-around">
+        <v-btn variant="outlined" @click="LogOut" class="ml-0 mt-0">♥注销登录♥</v-btn>
+        <v-btn variant="outlined" @click="() => { this.$router.push('register') }">(づ｡◕‿‿◕｡)づ报名</v-btn>
       </v-card-actions>
     </div>
     <div v-else-if="logRegStatus == 2">
@@ -61,6 +62,7 @@
       </v-card-text>
       <v-card-actions>
         <!-- <v-btn variant="outlined" block @click="() => { this.$router.push('admin') }">♥管理♥</v-btn> -->
+        <v-btn variant="outlined" block @click="LogOut">♥注销登录♥</v-btn>
       </v-card-actions>
     </div>
   </v-card>
@@ -103,7 +105,7 @@ export default {
   created: async function () {
     if ($cookies.isKey("sso_token")) {
       await axios({
-        url: 'http://192.168.1.100:11452/logcheck',
+        url: 'http://localhost:11452/logcheck',
         method: 'post',
         withCredentials: true,
       }).then(response => {
@@ -136,16 +138,16 @@ export default {
       }
 
       await axios({
-        url: 'http://192.168.1.100:11452/reg/registeredornot',
+        url: 'http://localhost:11452/reg/registeredornot',
         method: 'post',
         withCredentials: true,
       }).then(response => {
         // console.log(response)
         if (response.status == 200) {
-          // 200状态码表示已报名
+          // 200状态码表示未报名
           this.logRegStatus = 1
         } else if (response.status == 201) {
-          // 201状态码表示未报名
+          // 201状态码表示已报名
           this.logRegStatus = 2
         }
         // console.log(response)
@@ -156,7 +158,7 @@ export default {
       if (this.logRegStatus != 2) return
 
       await axios({
-        url: 'http://192.168.1.100:11452/reg/getregisterdepartmentsandphase',
+        url: 'http://localhost:11452/reg/getregisterdepartmentsandphase',
         method: 'post',
         withCredentials: true,
       }).then(response => {
@@ -182,7 +184,7 @@ export default {
             })
             userData = EncryptData(userData)
             axios({
-              url: "http://192.168.1.100:11452/reg/checkrctplacechosen",
+              url: "http://localhost:11452/reg/checkrctplacechosen",
               method: "post",
               data: userData,
               withCredentials: true,
@@ -208,15 +210,27 @@ export default {
   },
   methods: {
     LogIn() {
-      // window.location.href = "http://localhost:3333?redirecturi=" + window.location.href
-      window.location.href = "http://hustmaths.top/ssolog?redirecturi=" + window.location.href
+      window.location.href = "http://localhost:3333?redirecturi=" + window.location.href
+      // window.location.href = "http://hustmaths.top/ssolog?redirecturi=" + window.location.href
+    },
+    LogOut() {
+      axios({
+        url: "http://localhost:11452/logout",
+        method: "post",
+        withCredentials: true,
+      }).then((response) => {
+        console.log(response)
+        this.logRegStatus = 0;
+      }).catch(error => {
+        console.log(error)
+      })
     },
     showPlaceChoice(status, dpId, phaseState) {
       console.log(11)
       if (status != 1 && status != 2) return;
       console.log(arguments)
       axios({
-        url: "http://192.168.1.100:11452/rctplace/getrctplaceinfo",
+        url: "http://localhost:11452/rctplace/getrctplaceinfo",
         method: "post",
         data: {
           "department_id": dpId,
@@ -276,7 +290,7 @@ export default {
       })
       userRctData = EncryptData(userRctData)
       axios({
-        url: "http://192.168.1.100:11452/reg/chooserctplace",
+        url: "http://localhost:11452/reg/chooserctplace",
         method: "post",
         data: userRctData,
         withCredentials: true,
@@ -290,7 +304,7 @@ export default {
         })
         userData = EncryptData(userData)
         axios({
-          url: "http://192.168.1.100:11452/reg/checkrctplacechosen",
+          url: "http://localhost:11452/reg/checkrctplacechosen",
           method: "post",
           data: userData,
           withCredentials: true,

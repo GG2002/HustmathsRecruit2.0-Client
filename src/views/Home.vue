@@ -45,13 +45,9 @@
         <div class="top-bar pl-8 pt-4 d-flex justify-space-between" v-if="clientHeight > 690">
             <div>
                 <span style="font-size: 28px;">科学技术部</span>&nbsp;
-                <span style="font-size: 16px;letter-spacing: 5px;">{{new Date().getFullYear() }}秋招</span>
+                <span style="font-size: 16px;letter-spacing: 5px;">{{ new Date().getFullYear() }}秋招</span>
                 <br>
                 <span style="font-size: 16px;letter-spacing: 3px;">Science&Technology</span>
-            </div>
-            <div style="width: 15vw;min-width: 100px;max-width: 150px; margin-right: 5vw;"
-                v-if="clientWidth > 450 && currentPageIndex > 0">
-                <img :src="dpIntros[currentPageIndex - 1].department_image" alt="" style="width: 100%;">
             </div>
         </div>
     </div>
@@ -144,6 +140,10 @@
                     </div>
 
                     <div class="d-flex justify-center" v-for="item in dpIntros" style="height: 100vh;position: relative;">
+                        <div style="position: absolute;top: 0;right: 5vw;width: 15vw;min-width: 100px;max-width: 150px;"
+                            v-if="clientWidth > 450 && currentPageIndex > 0">
+                            <img :src="item.department_image" alt="" style="width: 100%;">
+                        </div>
                         <div class="d-flex flex-column justify-center" style="width:40vw;min-width: 320px;">
                             <div class="dp-intro-horizontal-border-mobile d-flex"
                                 style="font-size: 30px;width: calc(60px + 65vw);max-width: 450px;">
@@ -200,7 +200,7 @@ export default {
 我们想做的，<span style="color: rgb(8, 97, 163);font-style: normal;">没有边界</span>！
 来吧，准备好跟着我们跃入数据的深海。
 来吧，人生苦短,做点有意思的事！`,
-                department_image: "http://192.168.1.100:11452/assets/onecho.png",
+                department_image: "http://hustmaths.top/recruit/assets/onecho.png",
             },
             {
                 department_name: "雁祉作坊",
@@ -212,7 +212,7 @@ export default {
 平面设计、照片后期、影像创意...神迹将由你来创造。
 如果你也喜欢绘画，还可以享受全校唯一的电绘课哦☆
 在作坊，实现周边与产粮自由！`,
-                department_image: "http://192.168.1.100:11452/assets/workshop.png",
+                department_image: "http://hustmaths.top/recruit/assets/workshop.png",
             },
             {
                 department_name: "策划部",
@@ -225,7 +225,7 @@ export default {
 你尽可大胆设想。
 一款有着你的影子的小程序将带给你不可言表的成就感。
 风里雨里,策划部等你！！！`,
-                department_image: "http://192.168.1.100:11452/assets/project.png",
+                department_image: "http://hustmaths.top/recruit/assets/project.png",
             }
         ],
         currentPageIndex: 0,

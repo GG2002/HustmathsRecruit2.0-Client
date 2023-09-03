@@ -6,7 +6,8 @@
                     <v-app-bar-nav-icon variant="text" v-show="appBarNavIconShow"
                         @click.stop="drawer = !drawer"></v-app-bar-nav-icon>
                     <v-list>
-                        <v-list-item title="用户名" subtitle="宇宙部部长"></v-list-item>
+                        <v-list-item title="hustmaths" :subtitle="curDepartment.department_name + '部长'"
+                            @click.stop="showDepartmentChoiceDialog = true"></v-list-item>
                     </v-list>
                     <v-spacer></v-spacer>
 
@@ -387,6 +388,16 @@
             </v-layout>
         </v-card>
     </div>
+    <v-dialog v-model="showDepartmentChoiceDialog">
+        <v-card min-width="280" class="mx-auto">
+            <v-select v-model="curDepartment.department_id" :items="allDepartmentNameList" item-title="department_name"
+                item-value="department_id" label="选择部门">
+            </v-select>
+            <v-card-actions>
+                <v-btn color="primary" block @click="chooseCurDepartment">确认</v-btn>
+            </v-card-actions>
+        </v-card>
+    </v-dialog>
 </template>
 
 <script>
@@ -397,11 +408,14 @@ import EncryptData from '../utils';
 export default {
     data: () => ({
         // app bar配置数据
+        showDepartmentChoiceDialog: true,
         appBarNavIconShow: false,
         navTabValue: "dpIntro",
         drawer: true,
         mobile: false,
         curRctPhaseState: 0,
+        allDepartmentNameList: [],
+        curDepartment: { "department_id": null, "department_name": "未知" },
         startX: 0, //滑动开始
         endX: 0, //滑动结束
         // 部门信息配置数据
@@ -438,8 +452,6 @@ export default {
         editRctPlaceInfo: {},
     }),
     created: async function () {
-        this.getDepartmentInfos();
-        // this.getRecruitPlaceInfos();
         if (this.isMobile()) {
             // 当前设备是移动设备
             this.appBarNavIconShow = true
@@ -450,6 +462,13 @@ export default {
             this.appBarNavIconShow = true
             this.drawer = false
         }
+        axios({
+            url: "http://localhost:11452/dep/getdepartmentsnamelist",
+            method: "get",
+        }).then(response => {
+            this.allDepartmentNameList = response.data.departments
+            // this.getDepartmentInfos(31);
+        })
     },
     mounted: function () {
         this.init();
@@ -481,11 +500,19 @@ export default {
                 this.drawer = !this.drawer
             }
         },
-
+        chooseCurDepartment() {
+            this.getDepartmentInfos(this.curDepartment.department_id);
+            for (let i of this.allDepartmentNameList) {
+                if (i.department_id == this.curDepartment.department_id) {
+                    this.curDepartment.department_name = i.department_name;
+                }
+            }
+            this.showDepartmentChoiceDialog = false;
+        },
         //==============================================部门信息部分=============================================================
-        getDepartmentInfos() {
+        getDepartmentInfos(dpId) {
             // 获取部门信息
-            // 需给carousel组件初始值，否则岂不会加载出来
+            // 需给carousel组件初始值，否则不会加载出来
             this.departmentInfos = [{
                 department_id: 1,
                 department_name: "",
@@ -501,8 +528,11 @@ export default {
                 ]
             }]
             axios({
-                url: "http://192.168.1.100:11452/dep/getdepartmentsinfo",
+                url: "http://localhost:11452/dep/getdepartmentsinfo",
                 method: "get",
+                params: {
+                    "department_id": dpId,
+                }
             }).then(response => {
                 console.log(response.data)
                 if (!response.data.departments) return;
@@ -529,9 +559,10 @@ export default {
                 this.addDp.recruit_phase_list.push(this.enableDpRctPhase[tmpPhase_i])
             }
             axios({
-                url: "http://192.168.1.100:11452/dep/adddepartment",
+                url: "http://localhost:11452/admin/dep/adddepartment",
                 method: "post",
-                data: this.addDp
+                data: this.addDp,
+                withCredentials: true,
             }).then(response => {
                 console.log(response)
                 this.addDeparmentDialog = false
@@ -578,9 +609,10 @@ export default {
             }
             this.editDp.phase_changed = phaseChanged
             axios({
-                url: "http://192.168.1.100:11452/dep/editdepartment",
+                url: "http://localhost:11452/admin/dep/editdepartment",
                 method: "post",
-                data: this.editDp
+                data: this.editDp,
+                withCredentials: true,
             }).then(response => {
                 // console.log(response)
                 this.editDpRctPhase = []
@@ -592,11 +624,12 @@ export default {
         },
         delDepartment(dpId) {
             axios({
-                url: "http://192.168.1.100:11452/dep/deletedepartment",
+                url: "http://localhost:11452/admin/dep/deletedepartment",
                 method: "post",
                 data: {
                     department_id: dpId,
-                }
+                },
+                withCredentials: true,
             }).then(response => {
                 console.log(response)
                 this.getDepartmentInfos()
@@ -609,11 +642,12 @@ export default {
             // 按部门id获取新生信息
             for (let dpInfo of this.departmentInfos) {
                 await axios({
-                    url: "http://192.168.1.100:11452/dep/getdepartmentregisterdata",
+                    url: "http://localhost:11452/admin/dep/getdepartmentregisterdata",
                     method: "post",
                     data: {
                         "department_id": dpInfo.department_id
-                    }
+                    },
+                    withCredentials: true,
                 }).then(response => {
                     // console.log(response)
                     let tmpStuInfos = response.data.recruit_stu_infos
@@ -687,9 +721,10 @@ export default {
             })
             let encrpytedData = EncryptData(userData)
             axios({
-                url: "http://192.168.1.100:11452/reg/refuserecruitstu",
+                url: "http://localhost:11452/admin/reg/refuserecruitstu",
                 method: "post",
-                data: encrpytedData
+                data: encrpytedData,
+                withCredentials: true,
             }).then(response => {
                 console.log("refusestu", response)
                 this.getRctStuInfos()
@@ -706,9 +741,10 @@ export default {
             console.log(userData)
             let encrpytedData = EncryptData(userData)
             axios({
-                url: "http://192.168.1.100:11452/reg/passrecruitstu",
+                url: "http://localhost:11452/admin/reg/passrecruitstu",
                 method: "post",
-                data: encrpytedData
+                data: encrpytedData,
+                withCredentials: true,
             }).then(response => {
                 console.log("passstu", response)
                 this.getRctStuInfos()
@@ -769,7 +805,7 @@ export default {
             // 按部门id和phase_id获取该阶段所有测试场次
             for (let dpInfo of this.departmentInfos) {
                 await axios({
-                    url: "http://192.168.1.100:11452/rctplace/getrctplaceinfo",
+                    url: "http://localhost:11452/rctplace/getrctplaceinfo",
                     method: "post",
                     data: {
                         "department_id": dpInfo.department_id
@@ -820,9 +856,10 @@ export default {
             tmpRctPlaceInfo.person_num_limit = parseInt(tmpRctPlaceInfo.person_num_limit)
             console.log(tmpRctPlaceInfo)
             axios({
-                url: "http://192.168.1.100:11452/rctplace/addrctplaceinfo",
+                url: "http://localhost:11452/admin/rctplace/addrctplaceinfo",
                 method: "post",
-                data: tmpRctPlaceInfo
+                data: tmpRctPlaceInfo,
+                withCredentials: true,
             }).then(response => {
                 // console.log(response)
                 this.addRctPlaceDialog = false
@@ -838,9 +875,10 @@ export default {
         editRctPlace() {
             this.editRctPlaceInfo.person_num_limit = parseInt(this.editRctPlaceInfo.person_num_limit)
             axios({
-                url: "http://192.168.1.100:11452/rctplace/editrctplaceinfo",
+                url: "http://localhost:11452/admin/rctplace/editrctplaceinfo",
                 method: "post",
-                data: this.editRctPlaceInfo
+                data: this.editRctPlaceInfo,
+                withCredentials: true,
             }).then(response => {
                 // console.log(response)
                 this.editRctPlaceDialog = false
@@ -852,11 +890,12 @@ export default {
         delRctPlace(recruit_activity_id) {
             console.log(recruit_activity_id)
             axios({
-                url: "http://192.168.1.100:11452/rctplace/deleterctplaceinfo",
+                url: "http://localhost:11452/admin/rctplace/deleterctplaceinfo",
                 method: "post",
                 data: {
                     "recruit_activity_id": recruit_activity_id,
-                }
+                },
+                withCredentials: true,
             }).then(response => {
                 // console.log(response)
                 this.getRecruitPlaceInfos()
@@ -882,43 +921,38 @@ export default {
         },
         curRctPhaseState() {
             if (this.navTabValue == 'recruitInfo') {
-                // this.getRctStuInfos();
                 let curDp = this.departmentInfos[this.curDepartmentIndex]
                 if (!!this.recruitStuInfos[curDp.department_id]) this.curRctPhaseStuInfos = this.recruitStuInfos[curDp.department_id][this.curRctPhaseState]
-                setTimeout(() => {
-                    this.recuritInfoBS.refresh()
-                }, 100)
-                console.log("recruitInfoBS refresh")
                 this.restSlide();
             }
             if (this.navTabValue == 'recruitPlace') {
-                // this.getRecruitPlaceInfos();
                 let curDp = this.departmentInfos[this.curDepartmentIndex]
                 if (!!this.recruitPlaceInfos[curDp.department_id]) this.curRctPhasePlaceInfos = this.recruitPlaceInfos[curDp.department_id][this.curRctPhaseState]
-                setTimeout(() => {
-                    this.recruitPlaceBS.refresh();
-                }, 100)
-                console.log("recruitPlaceBS refresh")
+
             }
         },
         navTabValue() {
             if (this.navTabValue == 'recruitInfo') {
                 this.getRctStuInfos();
                 this.curRctPhaseState = this.departmentInfos[this.curDepartmentIndex].recruit_phase_list[0].state
-                setTimeout(() => {
-                    this.recuritInfoBS.refresh()
-                }, 100)
-                console.log("recruitInfoBS refresh")
                 this.restSlide();
             }
             if (this.navTabValue == 'recruitPlace') {
                 this.getRecruitPlaceInfos();
                 this.curRctPhaseState = this.departmentInfos[this.curDepartmentIndex].recruit_phase_list[0].state
-                setTimeout(() => {
-                    this.recruitPlaceBS.refresh();
-                }, 100)
-                console.log("recruitPlaceBS refresh")
             }
+        },
+        curRctPhaseStuInfos() {
+            this.$nextTick(() => {
+                this.recuritInfoBS.refresh()
+                console.log("curRctPhaseStuInfos changed")
+            })
+        },
+        curRctPhasePlaceInfos() {
+            this.$nextTick(() => {
+                this.recruitPlaceBS.refresh();
+                console.log("curRctPhasePlaceInfos changed")
+            })
         }
     }
 }

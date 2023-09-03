@@ -12,7 +12,7 @@ export default {
     if (!localStorage.getItem("rsaPubKey")) {
       // 获取公钥进行RSA加密
       await axios({
-        url: 'http://192.168.1.100:11452/getpubkey',
+        url: 'http://localhost:11452/getpubkey',
         method: 'post',
       }).then(response => {
         // console.log(response)
@@ -29,7 +29,7 @@ export default {
     if ($cookies.isKey("sso_token")) {
       // 检验登录状态
       await axios({
-        url: 'http://192.168.1.100:11452/logcheck',
+        url: 'http://localhost:11452/logcheck',
         method: 'post',
         withCredentials: true,
       }).then(response => {
